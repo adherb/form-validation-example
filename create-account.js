@@ -383,7 +383,7 @@ export default function CreateAccountForm() {
                 Username
               </label>
               <span className="text-sm text-red-500">
-                {state2.username.hasErrors && `${state2.username.message}`}
+                {state.username.hasErrors && `${state2.username.message}`}
               </span>
               <Input
                 onChange={(e) =>
@@ -421,7 +421,7 @@ export default function CreateAccountForm() {
                 Last name
               </label>
               <span className="text-sm text-red-500">
-                {state2.lastName.hasErrors && `${state.lastName.message}`}
+                {state.lastName.hasErrors && `${state.lastName.message}`}
               </span>
               <Input
                 onChange={(e) =>
@@ -440,7 +440,7 @@ export default function CreateAccountForm() {
                 Email
               </label>
               <span className="text-sm text-red-500">
-                {state2.email.hasErrors && `${state.email.message}`}
+                {state.email.hasErrors && `${state.email.message}`}
               </span>
               <div className="mt-1">
                 <Input
@@ -460,7 +460,7 @@ export default function CreateAccountForm() {
                 Password
               </label>
               <span className="text-sm text-red-500">
-                {state2.password.hasErrors && `${state.password.message}`}
+                {state.password.hasErrors && `${state.password.message}`}
               </span>
               <div className="mt-1">
                 <Input
@@ -486,8 +486,6 @@ export default function CreateAccountForm() {
               </div>
               <div className="mt-1">
                 <Input
-                  // value={confirmPassword}
-                  // onChange={setConfirmPassword}
                   onChange={(e) =>
                     dispatch({
                       type: "confirmPasswordImmediately",
