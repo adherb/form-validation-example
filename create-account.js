@@ -1,6 +1,3 @@
-// TODO
-// 1). Redirect for logged in user to dashbaord or if no sub to choose membership
-
 import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
@@ -12,7 +9,7 @@ import Button from "@/components/ui/Button";
 
 import ErrorNotification from "./ErrorNotification";
 
-export default function RegistrationForm() {
+export default function CreateAccountForm() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -47,13 +44,6 @@ export default function RegistrationForm() {
       isUnique: false,
       checkCount: 0,
     },
-    // confirmEmail: {
-    //   values: "",
-    //   hasErrors: false,
-    //   message: "",
-    //   isUnique: false,
-    //   checkCount: 0,
-    // },
     password: {
       values: "",
       hasErrors: false,
@@ -89,7 +79,6 @@ export default function RegistrationForm() {
           draft.username.message = "Username cannot exceed 50 characters.";
         }
         return;
-      //TODO: username can't contain certain characters??
       case "usernameAfterDelay":
         if (!draft.username.value || draft.username.value.length < 5) {
           draft.username.hasErrors = true;
@@ -116,8 +105,6 @@ export default function RegistrationForm() {
       case "firstNameImmediately":
         draft.firstName.hasErrors = false;
         draft.firstName.value = action.value;
-        //   return;
-        // case "firstNameAfterDelay":
         if (!draft.firstName.value) {
           draft.firstName.hasErrors = true;
           draft.firstName.message = "First name is required.";
@@ -126,8 +113,6 @@ export default function RegistrationForm() {
       case "lastNameImmediately":
         draft.lastName.hasErrors = false;
         draft.lastName.value = action.value;
-        //   return;
-        // case "firstNameAfterDelay":
         if (!draft.lastName.value) {
           draft.lastName.hasErrors = true;
           draft.lastName.message = "Last name is required.";
@@ -184,85 +169,73 @@ export default function RegistrationForm() {
         }
         return;
       case "submitForm":
-        // if (
-        //   !draft.firstName.hasErrors &&
-        //   !draft.lastName.hasErrors &&
-        //   !draft.email.hasErrors &&
-        //   draft.email.isUnique &&
-        //   !draft.password.hasErrors &&
-        //   !draft.confirmPassword.hasErrors
-        // ) {
-        //   draft.submitCount++;
-        // }
         draft.submitForm.checkCount++;
         return;
     }
   }
 
-  const [state2, dispatch] = useImmerReducer(ourReducer, initialState);
+  const [state, dispatch] = useImmerReducer(ourReducer, initialState);
 
   useEffect(() => {
-    if (state2.username.value) {
+    if (state.username.value) {
       const delay = setTimeout(
         () => dispatch({ type: "usernameAfterDelay" }),
         800
       );
       return () => clearTimeout(delay);
     }
-  }, [state2.username.value]);
+  }, [state.username.value]);
 
   useEffect(() => {
-    if (state2.email.value) {
+    if (state.email.value) {
       const delay = setTimeout(
         () => dispatch({ type: "emailAfterDelay" }),
         800
       );
       return () => clearTimeout(delay);
     }
-  }, [state2.email.value]);
+  }, [state.email.value]);
 
   useEffect(() => {
-    if (state2.confirmPassword.value) {
+    if (state.confirmPassword.value) {
       const delay = setTimeout(
         () => dispatch({ type: "confirmPasswordAfterDelay" }),
         800
       );
       return () => clearTimeout(delay);
     }
-  }, [state2.confirmPassword.value]);
+  }, [state.confirmPassword.value]);
 
   useEffect(() => {
-    if (state2.password.value) {
+    if (state.password.value) {
       const delay = setTimeout(
         () => dispatch({ type: "passwordAfterDelay" }),
         800
       );
       return () => clearTimeout(delay);
     }
-  }, [state2.password.value]);
+  }, [state.password.value]);
 
   useEffect(() => {
-    if (state2.confirmPassword.value) {
+    if (state.confirmPassword.value) {
       const delay = setTimeout(
         () => dispatch({ type: "confirmPasswordAfterDelay" }),
         800
       );
       return () => clearTimeout(delay);
     }
-  }, [state2.confirmPassword.value]);
+  }, [state.confirmPassword.value]);
 
   useEffect(() => {
-    if (state2.username.checkCount && !loading) {
-      // const delay = setTimeout(() => fetchResults, 800);
+    if (state.username.checkCount && !loading) {
       async function fetchResults() {
         try {
-          console.log("test1");
           const response = await fetch(
             `/api/auth/checkUsername`,
 
             {
               method: "POST",
-              body: JSON.stringify({ username: state2.username.value }),
+              body: JSON.stringify({ username: state.username.value }),
               headers: {
                 "Content-Type": "application/json",
               },
@@ -272,7 +245,6 @@ export default function RegistrationForm() {
           if (!response.ok) {
             console.log("Something went wrong!");
           }
-          console.log("data", data);
           dispatch({ type: "usernameUniqueResults", value: data });
         } catch (err) {
           console.log(err || "There is a problem with the request!");
@@ -280,20 +252,18 @@ export default function RegistrationForm() {
       }
       fetchResults();
     }
-  }, [state2.username.checkCount]);
+  }, [state.username.checkCount]);
 
   useEffect(() => {
-    if (state2.email.checkCount && !loading) {
-      // const delay = setTimeout(() => fetchResults, 800);
+    if (state.email.checkCount && !loading) {
       async function fetchResults() {
         try {
-          console.log("test1");
           const response = await fetch(
             `/api/auth/checkEmail`,
 
             {
               method: "POST",
-              body: JSON.stringify({ email: state2.email.value }),
+              body: JSON.stringify({ email: state.email.value }),
               headers: {
                 "Content-Type": "application/json",
               },
@@ -303,7 +273,6 @@ export default function RegistrationForm() {
           if (!response.ok) {
             console.log("Something went wrong!");
           }
-          console.log("data", data);
           dispatch({ type: "emailUniqueResults", value: data });
         } catch (error) {
           console.log("There is a problem with the request!");
@@ -311,64 +280,21 @@ export default function RegistrationForm() {
       }
       fetchResults();
     }
-  }, [state2.email.checkCount]);
-
-  // const body = { firstName, lastName, email, password };
-
-  // const body2 = "";
-
-  // async function handleCreateAccount(e) {
-  //   e.preventDefault();
-  //   setLoading(true);
-  //   setErrorMessage("");
-  //   console.log(body2);
-  //   try {
-  //     const response = await fetch(
-  //       `${process.env.NEXT_PUBLIC_SERVER_API}/register`,
-  //       {
-  //         method: "POST",
-  //         body: JSON.stringify(body2),
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
-  //     const data = await response.json();
-  //     if (!response.ok)
-  //       throw Error(
-  //         data.message || "Something went wrong! Please contact Support"
-  //       );
-  //     // save in local storage
-  //     window.localStorage.setItem("auth", JSON.stringify(data.token));
-  //     window.localStorage.setItem("user", JSON.stringify(data.user));
-  //     // save in context
-  //     setState({
-  //       user: data.user,
-  //       token: data.token,
-  //     });
-  //     router.push("/register/select-plan");
-  //     setLoading(false);
-  //   } catch (error) {
-  //     setLoading(false);
-  //     setErrorMessage(
-  //       error.message || "Something went wrong!, please contact Support"
-  //     );
-  //   }
-  // }
+  }, [state.email.checkCount]);
 
   useEffect(() => {
-    if (state2.submitForm.checkCount) {
+    if (state.submitForm.checkCount) {
       setLoading(true);
       async function fetchResults() {
         try {
           const response = await fetch(`/api/auth/createAccount`, {
             method: "POST",
             body: JSON.stringify({
-              username: state2.username.value.toLowerCase().trim(),
-              firstName: state2.firstName.value.trim(),
-              lastName: state2.lastName.value.trim(),
-              email: state2.email.value.trim(),
-              password: state2.password.value.trim(),
+              username: state.username.value.toLowerCase().trim(),
+              firstName: state.firstName.value.trim(),
+              lastName: state.lastName.value.trim(),
+              email: state.email.value.trim(),
+              password: state.password.value.trim(),
             }),
             headers: {
               "Content-Type": "application/json",
@@ -379,32 +305,12 @@ export default function RegistrationForm() {
             throw Error(
               data.message || "Something went wrong! Please contact Support"
             );
-          // console.log("DATA FROM CREATE ACCOUNT", data.newUser[0].password);
-          console.log(
-            "EMAIL FROM NEW USER",
-            data.newUser[0].email
-            // data[0].user.email
-          );
-          //  save in local storage
-          // window.localStorage.setItem(
-          //   "refresh_token",
-          //   JSON.stringify(data.refreshToken)
-          // );
-          // window.localStorage.setItem("user", JSON.stringify(data.user[0]));
-          // save in context
-          // setState({
-          //   user: data.user[0],
-          //   token: data.token,
-          // });
+          
           const result = await signIn("credentials", {
             redirect: false,
-            email: state2.email.value,
-            password: state2.password.value,
-            // email: data.user[0].email,
-            // password: data.user[0].password,
+            email: state.email.value,
+            password: state.password.value,
           });
-          console.log("test", result);
-
           router.push("/register/select-plan");
           setLoading(false);
         } catch (err) {
@@ -415,9 +321,8 @@ export default function RegistrationForm() {
         }
       }
       fetchResults();
-      // return () => ourRequest.cancel();
     }
-  }, [state2.submitForm.checkCount]);
+  }, [state.submitForm.checkCount]);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -425,46 +330,35 @@ export default function RegistrationForm() {
     if (!checked) {
       setCheckedErrorMessage("Please agree to our Terms.");
     }
-    dispatch({ type: "usernameImmediately", value: state2.username.value });
+    dispatch({ type: "usernameImmediately", value: state.username.value });
     dispatch({
       type: "usernameAfterDelay",
-      value: state2.username.value,
+      value: state.username.value,
       // noRequest: true,
     });
-    dispatch({ type: "firstNameImmediately", value: state2.firstName.value });
-    dispatch({ type: "lastNameImmediately", value: state2.lastName.value });
-    dispatch({ type: "emailImmediately", value: state2.email.value });
+    dispatch({ type: "firstNameImmediately", value: state.firstName.value });
+    dispatch({ type: "lastNameImmediately", value: state.lastName.value });
+    dispatch({ type: "emailImmediately", value: state.email.value });
     dispatch({
       type: "emailAfterDelay",
-      value: state2.email.value,
-      // noRequest: true,
+      value: state.email.value,
     });
-    dispatch({ type: "passwordImmediately", value: state2.password.value });
-    dispatch({ type: "passwordAfterDelay", value: state2.password.value });
+    dispatch({ type: "passwordImmediately", value: state.password.value });
+    dispatch({ type: "passwordAfterDelay", value: state.password.value });
     dispatch({
       type: "confirmPasswordImmediately",
-      value: state2.confirmPassword.value,
+      value: state.confirmPassword.value,
     });
     dispatch({
       type: "confirmPasswordAfterDelay",
-      value: state2.confirmPassword.value,
+      value: state.confirmPassword.value,
     });
-    // dispatch({
-    //   type: "agreeToTerms",
-    //   value: state2.confirmPassword.value,
-    // });
-    // alert("ehuc");
     dispatch({ type: "submitForm" });
   }
 
   const handleTerms = () => {
     setCheckedErrorMessage("");
     setChecked(!checked);
-    // if (checked == false) {
-    //   setCheckedErrorMessage("Please agree to out Terms");
-    // }
-    // alert(checked);
-    // console.log("Checked", checked);
   };
 
   return (
@@ -479,32 +373,11 @@ export default function RegistrationForm() {
             Create your account
           </h2>
 
-          {/* <button onClick={fetchResults}>Test</button> */}
-
           <form
             onSubmit={handleSubmit}
             autoComplete="off"
             className="space-y-4"
           >
-            {/* <div>
-              <label htmlFor="email" className="sr-only">
-                Username
-              </label>
-              <div className="text-sm text-red-500">
-                {state2.username.hasErrors && `${state2.username.message}`}
-              </div>
-              <Input
-                onChange={(e) =>
-                  dispatch({
-                    type: "usernameImmediately",
-                    value: e.target.value,
-                  })
-                }
-                type="text"
-                placeholder="Username"
-                required
-              />
-            </div> */}
             <div>
               <label htmlFor="email" className="sr-only">
                 Username
@@ -521,7 +394,6 @@ export default function RegistrationForm() {
                 }
                 type="text"
                 placeholder="Username"
-                // required
               />
             </div>
 
@@ -530,7 +402,7 @@ export default function RegistrationForm() {
                 First name
               </label>
               <span className="text-sm text-red-500">
-                {state2.firstName.hasErrors && `${state2.firstName.message}`}
+                {state.firstName.hasErrors && `${state.firstName.message}`}
               </span>
               <Input
                 onChange={(e) =>
@@ -541,7 +413,6 @@ export default function RegistrationForm() {
                 }
                 type="text"
                 placeholder="First name"
-                // required
               />
             </div>
 
@@ -550,7 +421,7 @@ export default function RegistrationForm() {
                 Last name
               </label>
               <span className="text-sm text-red-500">
-                {state2.lastName.hasErrors && `${state2.lastName.message}`}
+                {state2.lastName.hasErrors && `${state.lastName.message}`}
               </span>
               <Input
                 onChange={(e) =>
@@ -561,7 +432,6 @@ export default function RegistrationForm() {
                 }
                 type="text"
                 placeholder="Last name"
-                // required
               />
             </div>
 
@@ -570,51 +440,30 @@ export default function RegistrationForm() {
                 Email
               </label>
               <span className="text-sm text-red-500">
-                {state2.email.hasErrors && `${state2.email.message}`}
+                {state2.email.hasErrors && `${state.email.message}`}
               </span>
               <div className="mt-1">
                 <Input
-                  // autoComplete="new-password"
-                  // value={email}
-                  // onChange={setEmail}
                   onChange={(e) =>
                     dispatch({
                       type: "emailImmediately",
                       value: e.target.value,
                     })
                   }
-                  // type="email"
                   placeholder="Email"
                 />
               </div>
             </div>
-
-            {/* <div>
-              <label htmlFor="email" className="sr-only">
-                Confirm email
-              </label>
-              <div className="mt-1">
-                <Input
-                  value={confirmEmail}
-                  onChange={setConfirmEmail}
-                  type="email"
-                  placeholder="Confirm email"
-                  required
-                />
-              </div>
-            </div> */}
 
             <div>
               <label htmlFor="email" className="sr-only">
                 Password
               </label>
               <span className="text-sm text-red-500">
-                {state2.password.hasErrors && `${state2.password.message}`}
+                {state2.password.hasErrors && `${state.password.message}`}
               </span>
               <div className="mt-1">
                 <Input
-                  // value={password}
-                  // onChange={setPassword}
                   onChange={(e) =>
                     dispatch({
                       type: "passwordImmediately",
@@ -623,7 +472,6 @@ export default function RegistrationForm() {
                   }
                   type="password"
                   placeholder="Password"
-                  // required
                 />
               </div>
             </div>
@@ -633,8 +481,8 @@ export default function RegistrationForm() {
                 Confirm password
               </label>
               <div className="mt-2 text-sm text-red-500">
-                {state2.confirmPassword.hasErrors &&
-                  `${state2.confirmPassword.message}`}
+                {state.confirmPassword.hasErrors &&
+                  `${state.confirmPassword.message}`}
               </div>
               <div className="mt-1">
                 <Input
@@ -648,39 +496,22 @@ export default function RegistrationForm() {
                   }
                   type="password"
                   placeholder="Confirm password"
-                  // required
                 />
               </div>
             </div>
 
-            {/* <fieldset className=""> */}
             <div>
               <div className="mt-2 text-sm text-red-500">
-                {/* {state2.agreeToTerms.hasErrors &&
-                  `${state2.agreeToTerms.message}`} */}
                 {checkedErrorMessage && `${checkedErrorMessage}`}
               </div>
-              {/* <legend className="sr-only">Notifications</legend> */}
               <div className="relative flex items-start">
                 <div className="flex items-center h-5">
                   <input
                     onChange={
-                      // dispatch({
                       handleTerms
-                      //   type: "agreeToTerms",
-                      //   value: e.target.value,
-                      // })
-                      // onChange={(e) =>
-                      //   dispatch({
-                      //     handleTerms,
-                      //     type: "agreeToTerms",
-                      //     value: e.target.value,
-                      //   })
                     }
                     value={checked}
-                    // id="comments"
                     aria-describedby="agree to terms"
-                    // name="comments"
                     type="checkbox"
                     className="bg-white dark:bg-black focus:ring-purple-500 h-4 w-4 text-purple-600 border-gray-300 dark:border-gray-700 rounded"
                   />
@@ -715,28 +546,21 @@ export default function RegistrationForm() {
                       Terms
                     </a>
                   </label>
-                  {/* <span
-                    id="comments-description"
-                    className="text-xs text-gray-400 dark:text-gray-500"
-                  >
-                    Agree to our privacy policy, T&Cs and Terms Of Use
-                  </span> */}
                 </div>
               </div>
             </div>
-            {/* </fieldset> */}
 
             <div>
               <Button
                 width="w-full"
                 loading={loading}
-                // disabled={
-                //   !draft.firstName.hasErrors &&
-                //   !draft.email.hasErrors &&
-                //   draft.email.isUnique &&
-                //   !draft.password.hasErrors &&
-                //   !draft.confirmPassword.hasErrors
-                // }
+                 disabled={
+                   !draft.firstName.hasErrors &&
+                   !draft.email.hasErrors &&
+                   draft.email.isUnique &&
+                   !draft.password.hasErrors &&
+                   !draft.confirmPassword.hasErrors
+                 }
               >
                 Continue
               </Button>
