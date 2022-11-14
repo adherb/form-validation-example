@@ -1,0 +1,754 @@
+// TODO
+// 1). Redirect for logged in user to dashbaord or if no sub to choose membership
+
+import { useState, useEffect, useContext } from "react";
+import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
+import { useImmerReducer } from "use-immer";
+import { signIn } from "next-auth/react";
+
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
+
+import ErrorNotification from "./ErrorNotification";
+
+export default function RegistrationForm() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  const [checked, setChecked] = useState(false);
+  const [checkedErrorMessage, setCheckedErrorMessage] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const initialState = {
+    username: {
+      values: "",
+      hasErrors: false,
+      message: "",
+      isUnique: false,
+      checkCount: 0,
+    },
+    firstName: {
+      values: "",
+      hasErrors: false,
+      message: "",
+    },
+    lastName: {
+      values: "",
+      hasErrors: false,
+      message: "",
+    },
+    email: {
+      values: "",
+      hasErrors: false,
+      message: "",
+      isUnique: false,
+      checkCount: 0,
+    },
+    // confirmEmail: {
+    //   values: "",
+    //   hasErrors: false,
+    //   message: "",
+    //   isUnique: false,
+    //   checkCount: 0,
+    // },
+    password: {
+      values: "",
+      hasErrors: false,
+      message: "",
+      isUnique: false,
+      checkCount: 0,
+    },
+    confirmPassword: {
+      values: "",
+      hasErrors: false,
+      message: "",
+      isUnique: false,
+      checkCount: 0,
+    },
+    agreeToTerms: {
+      values: "",
+      hasErrors: false,
+      message: "",
+    },
+    submitForm: {
+      checkCount: 0,
+    },
+  };
+
+  function ourReducer(draft, action) {
+    switch (action.type) {
+      case "usernameImmediately":
+        draft.username.hasErrors = false;
+        draft.username.value = action.value;
+        draft.username.value = action.value;
+        if (!draft.username.value || draft.username.value.length > 50) {
+          draft.username.hasErrors = true;
+          draft.username.message = "Username cannot exceed 50 characters.";
+        }
+        return;
+      //TODO: username can't contain certain characters??
+      case "usernameAfterDelay":
+        if (!draft.username.value || draft.username.value.length < 5) {
+          draft.username.hasErrors = true;
+          draft.username.message =
+            "Username must contain more than 5 characters.";
+        }
+        if (/\s/.test(draft.username.value)) {
+          draft.username.hasErrors = true;
+          draft.username.message = "Username cannot contain spaces.";
+        }
+        if (!draft.username.hasErrors && !action.noRequest) {
+          draft.username.checkCount++;
+        }
+        return;
+      case "usernameUniqueResults":
+        if (action.value === false) {
+          draft.username.hasErrors = true;
+          draft.username.isUnique = false;
+          draft.username.message = "That username is already taken";
+        } else {
+          draft.username.isUnique = true;
+        }
+        return;
+      case "firstNameImmediately":
+        draft.firstName.hasErrors = false;
+        draft.firstName.value = action.value;
+        //   return;
+        // case "firstNameAfterDelay":
+        if (!draft.firstName.value) {
+          draft.firstName.hasErrors = true;
+          draft.firstName.message = "First name is required.";
+        }
+        return;
+      case "lastNameImmediately":
+        draft.lastName.hasErrors = false;
+        draft.lastName.value = action.value;
+        //   return;
+        // case "firstNameAfterDelay":
+        if (!draft.lastName.value) {
+          draft.lastName.hasErrors = true;
+          draft.lastName.message = "Last name is required.";
+        }
+        return;
+      case "emailImmediately":
+        draft.email.hasErrors = false;
+        draft.email.value = action.value;
+        return;
+      case "emailAfterDelay":
+        if (!/^\S+@\S+$/.test(draft.email.value)) {
+          draft.email.hasErrors = true;
+          draft.email.message = "You must provide a valid email address.";
+        }
+        if (!draft.email.hasErrors && !action.noRequest) {
+          draft.email.checkCount++;
+        }
+        return;
+      case "emailUniqueResults":
+        if (action.value === false) {
+          draft.email.hasErrors = true;
+          draft.email.isUnique = false;
+          draft.email.message = "That email is already taken";
+        } else {
+          draft.email.isUnique = true;
+        }
+        return;
+      case "passwordImmediately":
+        draft.password.hasErrors = false;
+        draft.password.value = action.value;
+        if (!draft.password.value || draft.password.value.length > 50) {
+          draft.password.hasErrors = true;
+          draft.password.message = "Password cannot exceed 50 characters.";
+        }
+        return;
+      case "passwordAfterDelay":
+        if (!draft.password.value || draft.password.value.length < 10) {
+          draft.password.hasErrors = true;
+          draft.password.message =
+            "Password must contain more than 10 characters.";
+        }
+        return;
+      case "confirmPasswordImmediately":
+        draft.confirmPassword.hasErrors = false;
+        draft.confirmPassword.value = action.value;
+        return;
+      case "confirmPasswordAfterDelay":
+        if (
+          !draft.confirmPassword.value ||
+          draft.confirmPassword.value !== draft.password.value
+        ) {
+          draft.confirmPassword.hasErrors = true;
+          draft.confirmPassword.message = "Must match above password.";
+        }
+        return;
+      case "submitForm":
+        // if (
+        //   !draft.firstName.hasErrors &&
+        //   !draft.lastName.hasErrors &&
+        //   !draft.email.hasErrors &&
+        //   draft.email.isUnique &&
+        //   !draft.password.hasErrors &&
+        //   !draft.confirmPassword.hasErrors
+        // ) {
+        //   draft.submitCount++;
+        // }
+        draft.submitForm.checkCount++;
+        return;
+    }
+  }
+
+  const [state2, dispatch] = useImmerReducer(ourReducer, initialState);
+
+  useEffect(() => {
+    if (state2.username.value) {
+      const delay = setTimeout(
+        () => dispatch({ type: "usernameAfterDelay" }),
+        800
+      );
+      return () => clearTimeout(delay);
+    }
+  }, [state2.username.value]);
+
+  useEffect(() => {
+    if (state2.email.value) {
+      const delay = setTimeout(
+        () => dispatch({ type: "emailAfterDelay" }),
+        800
+      );
+      return () => clearTimeout(delay);
+    }
+  }, [state2.email.value]);
+
+  useEffect(() => {
+    if (state2.confirmPassword.value) {
+      const delay = setTimeout(
+        () => dispatch({ type: "confirmPasswordAfterDelay" }),
+        800
+      );
+      return () => clearTimeout(delay);
+    }
+  }, [state2.confirmPassword.value]);
+
+  useEffect(() => {
+    if (state2.password.value) {
+      const delay = setTimeout(
+        () => dispatch({ type: "passwordAfterDelay" }),
+        800
+      );
+      return () => clearTimeout(delay);
+    }
+  }, [state2.password.value]);
+
+  useEffect(() => {
+    if (state2.confirmPassword.value) {
+      const delay = setTimeout(
+        () => dispatch({ type: "confirmPasswordAfterDelay" }),
+        800
+      );
+      return () => clearTimeout(delay);
+    }
+  }, [state2.confirmPassword.value]);
+
+  useEffect(() => {
+    if (state2.username.checkCount && !loading) {
+      // const delay = setTimeout(() => fetchResults, 800);
+      async function fetchResults() {
+        try {
+          console.log("test1");
+          const response = await fetch(
+            `/api/auth/checkUsername`,
+
+            {
+              method: "POST",
+              body: JSON.stringify({ username: state2.username.value }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          const data = await response.json();
+          if (!response.ok) {
+            console.log("Something went wrong!");
+          }
+          console.log("data", data);
+          dispatch({ type: "usernameUniqueResults", value: data });
+        } catch (err) {
+          console.log(err || "There is a problem with the request!");
+        }
+      }
+      fetchResults();
+    }
+  }, [state2.username.checkCount]);
+
+  useEffect(() => {
+    if (state2.email.checkCount && !loading) {
+      // const delay = setTimeout(() => fetchResults, 800);
+      async function fetchResults() {
+        try {
+          console.log("test1");
+          const response = await fetch(
+            `/api/auth/checkEmail`,
+
+            {
+              method: "POST",
+              body: JSON.stringify({ email: state2.email.value }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          const data = await response.json();
+          if (!response.ok) {
+            console.log("Something went wrong!");
+          }
+          console.log("data", data);
+          dispatch({ type: "emailUniqueResults", value: data });
+        } catch (error) {
+          console.log("There is a problem with the request!");
+        }
+      }
+      fetchResults();
+    }
+  }, [state2.email.checkCount]);
+
+  // const body = { firstName, lastName, email, password };
+
+  // const body2 = "";
+
+  // async function handleCreateAccount(e) {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   setErrorMessage("");
+  //   console.log(body2);
+  //   try {
+  //     const response = await fetch(
+  //       `${process.env.NEXT_PUBLIC_SERVER_API}/register`,
+  //       {
+  //         method: "POST",
+  //         body: JSON.stringify(body2),
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+  //     const data = await response.json();
+  //     if (!response.ok)
+  //       throw Error(
+  //         data.message || "Something went wrong! Please contact Support"
+  //       );
+  //     // save in local storage
+  //     window.localStorage.setItem("auth", JSON.stringify(data.token));
+  //     window.localStorage.setItem("user", JSON.stringify(data.user));
+  //     // save in context
+  //     setState({
+  //       user: data.user,
+  //       token: data.token,
+  //     });
+  //     router.push("/register/select-plan");
+  //     setLoading(false);
+  //   } catch (error) {
+  //     setLoading(false);
+  //     setErrorMessage(
+  //       error.message || "Something went wrong!, please contact Support"
+  //     );
+  //   }
+  // }
+
+  useEffect(() => {
+    if (state2.submitForm.checkCount) {
+      setLoading(true);
+      async function fetchResults() {
+        try {
+          const response = await fetch(`/api/auth/createAccount`, {
+            method: "POST",
+            body: JSON.stringify({
+              username: state2.username.value.toLowerCase().trim(),
+              firstName: state2.firstName.value.trim(),
+              lastName: state2.lastName.value.trim(),
+              email: state2.email.value.trim(),
+              password: state2.password.value.trim(),
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await response.json();
+          if (!response.ok)
+            throw Error(
+              data.message || "Something went wrong! Please contact Support"
+            );
+          // console.log("DATA FROM CREATE ACCOUNT", data.newUser[0].password);
+          console.log(
+            "EMAIL FROM NEW USER",
+            data.newUser[0].email
+            // data[0].user.email
+          );
+          //  save in local storage
+          // window.localStorage.setItem(
+          //   "refresh_token",
+          //   JSON.stringify(data.refreshToken)
+          // );
+          // window.localStorage.setItem("user", JSON.stringify(data.user[0]));
+          // save in context
+          // setState({
+          //   user: data.user[0],
+          //   token: data.token,
+          // });
+          const result = await signIn("credentials", {
+            redirect: false,
+            email: state2.email.value,
+            password: state2.password.value,
+            // email: data.user[0].email,
+            // password: data.user[0].password,
+          });
+          console.log("test", result);
+
+          router.push("/register/select-plan");
+          setLoading(false);
+        } catch (err) {
+          setLoading(false);
+          console.log(
+            err || "There was a problem or the request was cancelled."
+          );
+        }
+      }
+      fetchResults();
+      // return () => ourRequest.cancel();
+    }
+  }, [state2.submitForm.checkCount]);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    setCheckedErrorMessage("");
+    if (!checked) {
+      setCheckedErrorMessage("Please agree to our Terms.");
+    }
+    dispatch({ type: "usernameImmediately", value: state2.username.value });
+    dispatch({
+      type: "usernameAfterDelay",
+      value: state2.username.value,
+      // noRequest: true,
+    });
+    dispatch({ type: "firstNameImmediately", value: state2.firstName.value });
+    dispatch({ type: "lastNameImmediately", value: state2.lastName.value });
+    dispatch({ type: "emailImmediately", value: state2.email.value });
+    dispatch({
+      type: "emailAfterDelay",
+      value: state2.email.value,
+      // noRequest: true,
+    });
+    dispatch({ type: "passwordImmediately", value: state2.password.value });
+    dispatch({ type: "passwordAfterDelay", value: state2.password.value });
+    dispatch({
+      type: "confirmPasswordImmediately",
+      value: state2.confirmPassword.value,
+    });
+    dispatch({
+      type: "confirmPasswordAfterDelay",
+      value: state2.confirmPassword.value,
+    });
+    // dispatch({
+    //   type: "agreeToTerms",
+    //   value: state2.confirmPassword.value,
+    // });
+    // alert("ehuc");
+    dispatch({ type: "submitForm" });
+  }
+
+  const handleTerms = () => {
+    setCheckedErrorMessage("");
+    setChecked(!checked);
+    // if (checked == false) {
+    //   setCheckedErrorMessage("Please agree to out Terms");
+    // }
+    // alert(checked);
+    // console.log("Checked", checked);
+  };
+
+  return (
+    <>
+      <div className="bg-white dark:bg-black px-4 flex flex-col justify-center rounded-md py-16 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-xs">
+          <p className="mt-2 uppercase text-sm text-gray-600 dark:text-gray-400 max-w">
+            Step 1 of 3&nbsp;
+          </p>
+
+          <h2 className="uppercase mt-2 mb-6 text-2xl font-extrabold text-gray-900 dark:text-white">
+            Create your account
+          </h2>
+
+          {/* <button onClick={fetchResults}>Test</button> */}
+
+          <form
+            onSubmit={handleSubmit}
+            autoComplete="off"
+            className="space-y-4"
+          >
+            {/* <div>
+              <label htmlFor="email" className="sr-only">
+                Username
+              </label>
+              <div className="text-sm text-red-500">
+                {state2.username.hasErrors && `${state2.username.message}`}
+              </div>
+              <Input
+                onChange={(e) =>
+                  dispatch({
+                    type: "usernameImmediately",
+                    value: e.target.value,
+                  })
+                }
+                type="text"
+                placeholder="Username"
+                required
+              />
+            </div> */}
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Username
+              </label>
+              <span className="text-sm text-red-500">
+                {state2.username.hasErrors && `${state2.username.message}`}
+              </span>
+              <Input
+                onChange={(e) =>
+                  dispatch({
+                    type: "usernameImmediately",
+                    value: e.target.value,
+                  })
+                }
+                type="text"
+                placeholder="Username"
+                // required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="sr-only">
+                First name
+              </label>
+              <span className="text-sm text-red-500">
+                {state2.firstName.hasErrors && `${state2.firstName.message}`}
+              </span>
+              <Input
+                onChange={(e) =>
+                  dispatch({
+                    type: "firstNameImmediately",
+                    value: e.target.value,
+                  })
+                }
+                type="text"
+                placeholder="First name"
+                // required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Last name
+              </label>
+              <span className="text-sm text-red-500">
+                {state2.lastName.hasErrors && `${state2.lastName.message}`}
+              </span>
+              <Input
+                onChange={(e) =>
+                  dispatch({
+                    type: "lastNameImmediately",
+                    value: e.target.value,
+                  })
+                }
+                type="text"
+                placeholder="Last name"
+                // required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Email
+              </label>
+              <span className="text-sm text-red-500">
+                {state2.email.hasErrors && `${state2.email.message}`}
+              </span>
+              <div className="mt-1">
+                <Input
+                  // autoComplete="new-password"
+                  // value={email}
+                  // onChange={setEmail}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "emailImmediately",
+                      value: e.target.value,
+                    })
+                  }
+                  // type="email"
+                  placeholder="Email"
+                />
+              </div>
+            </div>
+
+            {/* <div>
+              <label htmlFor="email" className="sr-only">
+                Confirm email
+              </label>
+              <div className="mt-1">
+                <Input
+                  value={confirmEmail}
+                  onChange={setConfirmEmail}
+                  type="email"
+                  placeholder="Confirm email"
+                  required
+                />
+              </div>
+            </div> */}
+
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Password
+              </label>
+              <span className="text-sm text-red-500">
+                {state2.password.hasErrors && `${state2.password.message}`}
+              </span>
+              <div className="mt-1">
+                <Input
+                  // value={password}
+                  // onChange={setPassword}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "passwordImmediately",
+                      value: e.target.value,
+                    })
+                  }
+                  type="password"
+                  placeholder="Password"
+                  // required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Confirm password
+              </label>
+              <div className="mt-2 text-sm text-red-500">
+                {state2.confirmPassword.hasErrors &&
+                  `${state2.confirmPassword.message}`}
+              </div>
+              <div className="mt-1">
+                <Input
+                  // value={confirmPassword}
+                  // onChange={setConfirmPassword}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "confirmPasswordImmediately",
+                      value: e.target.value,
+                    })
+                  }
+                  type="password"
+                  placeholder="Confirm password"
+                  // required
+                />
+              </div>
+            </div>
+
+            {/* <fieldset className=""> */}
+            <div>
+              <div className="mt-2 text-sm text-red-500">
+                {/* {state2.agreeToTerms.hasErrors &&
+                  `${state2.agreeToTerms.message}`} */}
+                {checkedErrorMessage && `${checkedErrorMessage}`}
+              </div>
+              {/* <legend className="sr-only">Notifications</legend> */}
+              <div className="relative flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    onChange={
+                      // dispatch({
+                      handleTerms
+                      //   type: "agreeToTerms",
+                      //   value: e.target.value,
+                      // })
+                      // onChange={(e) =>
+                      //   dispatch({
+                      //     handleTerms,
+                      //     type: "agreeToTerms",
+                      //     value: e.target.value,
+                      //   })
+                    }
+                    value={checked}
+                    // id="comments"
+                    aria-describedby="agree to terms"
+                    // name="comments"
+                    type="checkbox"
+                    className="bg-white dark:bg-black focus:ring-purple-500 h-4 w-4 text-purple-600 border-gray-300 dark:border-gray-700 rounded"
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label
+                    htmlFor="comments"
+                    className="text-xs font-medium text-gray-400 dark:text-gray-500"
+                  >
+                    Agree to our{" "}
+                    <a
+                      href="/privacy-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Privacy Policy
+                    </a>
+                    ,{" "}
+                    <a
+                      href="/privacy-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      T&Cs
+                    </a>{" "}
+                    and{" "}
+                    <a
+                      href="/privacy-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Terms
+                    </a>
+                  </label>
+                  {/* <span
+                    id="comments-description"
+                    className="text-xs text-gray-400 dark:text-gray-500"
+                  >
+                    Agree to our privacy policy, T&Cs and Terms Of Use
+                  </span> */}
+                </div>
+              </div>
+            </div>
+            {/* </fieldset> */}
+
+            <div>
+              <Button
+                width="w-full"
+                loading={loading}
+                // disabled={
+                //   !draft.firstName.hasErrors &&
+                //   !draft.email.hasErrors &&
+                //   draft.email.isUnique &&
+                //   !draft.password.hasErrors &&
+                //   !draft.confirmPassword.hasErrors
+                // }
+              >
+                Continue
+              </Button>
+              {errorMessage && (
+                <div className="py-4">
+                  <ErrorNotification errorMessage={errorMessage} />
+                </div>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+}
