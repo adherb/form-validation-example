@@ -19,6 +19,7 @@ export default function CreateAccountForm() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Set intial state
   const initialState = {
     username: {
       values: "",
@@ -68,6 +69,7 @@ export default function CreateAccountForm() {
     },
   };
 
+  // Create immer-reducer function to handle all validation cases and error messages
   function ourReducer(draft, action) {
     switch (action.type) {
       case "usernameImmediately":
@@ -226,9 +228,11 @@ export default function CreateAccountForm() {
     }
   }, [state.confirmPassword.value]);
 
+  
+  // Check username is unique in database
   useEffect(() => {
     if (state.username.checkCount && !loading) {
-      async function fetchResults() {
+      async function fetchUsernameResults() {
         try {
           const response = await fetch(
             `/api/auth/checkUsername`,
@@ -250,13 +254,14 @@ export default function CreateAccountForm() {
           console.log(err || "There is a problem with the request!");
         }
       }
-      fetchResults();
+      fetchUsernameResults();
     }
   }, [state.username.checkCount]);
 
+  // Check if email already exists in the database
   useEffect(() => {
     if (state.email.checkCount && !loading) {
-      async function fetchResults() {
+      async function fetchEmailResults() {
         try {
           const response = await fetch(
             `/api/auth/checkEmail`,
@@ -278,7 +283,7 @@ export default function CreateAccountForm() {
           console.log("There is a problem with the request!");
         }
       }
-      fetchResults();
+      fetchEmailResults();
     }
   }, [state.email.checkCount]);
 
@@ -334,7 +339,6 @@ export default function CreateAccountForm() {
     dispatch({
       type: "usernameAfterDelay",
       value: state.username.value,
-      // noRequest: true,
     });
     dispatch({ type: "firstNameImmediately", value: state.firstName.value });
     dispatch({ type: "lastNameImmediately", value: state.lastName.value });
