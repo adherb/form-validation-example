@@ -383,7 +383,7 @@ export default function CreateAccountForm() {
                 Username
               </label>
               <span className="text-sm text-red-500">
-                {state.username.hasErrors && `${state2.username.message}`}
+                {state.username.hasErrors && `${state.username.message}`}
               </span>
               <Input
                 onChange={(e) =>
